@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>Music Player - Premium UI</title>
+    <!-- Nunito Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-body: #0f1115;
+            --bg-panel: #22252e;
+            --bg-secondary: #313543;
+            --bg-input: #313543;
+            --text-main: #ffffff;
+            --text-dim: #9aa0b1;
+            --border-panel: #2f3340;
+            --accent: #e4e6eb;
+            --hover-bg: #2b2f3a;
+            --progress-bg: #404554;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            /* add some padding in case of small screens */
+            padding: 20px;
+        }
+
+        .app-container {
+            display: flex;
+            width: 816px;
+            max-width: 100%;
+            height: 700px;
+            max-height: 100%;
+            gap: 16px;
+        }
+
+        .panel {
+            background-color: var(--bg-panel);
+            border-radius: 28px;
+            border: 1px solid var(--border-panel);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        /* --- Left Panel: Player --- */
+        .player-panel {
+            width: 400px;
+            flex-shrink: 0;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .album-art-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-color: var(--bg-secondary);
+            border-radius: 18px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-shrink: 0;
+        }
+
+        .placeholder-icon {
+            font-size: 140px;
+            color: #4a5060;
+        }
+
+        #yt-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #main-player-art {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 11;
+            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0;
+            transform: scale(1.35);
+            /* Zoom in to hide YouTube thumbnail black bars */
+        }
+
+        .placeholder-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-secondary);
+            z-index: 15;
+            transition: opacity 0.3s;
+        }
+
+        .song-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .song-text {
+            flex: 1;
+            overflow: hidden;
+            min-width: 0;
+            padding-right: 12px;
+        }
+
+        .song-text h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .song-text h2 span {
+            color: var(--text-dim);
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .song-text p {
+            color: var(--text-dim);
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 400;
+        }
+
+        .song-info-row>i {
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            padding-top: 2px;
+            transition: color 0.1s;
+        }
+
+        .song-info-row>i:active {
+            color: var(--accent);
+            transform: scale(0.95);
+        }
+
+        .progress-bar-container {
+            margin-bottom: 24px;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 5px;
+            background-color: var(--progress-bg);
+            border-radius: 2.5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background-color: var(--accent);
+            border-radius: 2.5px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 0.1s linear;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+            margin-bottom: 8px;
+        }
+
+        .control-icon-small {
+            color: var(--text-dim);
+            font-size: 22px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .control-icon-small:hover {
+            color: var(--text-main);
+        }
+
+        .main-controls {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .control-icon-main {
+            color: var(--text-main);
+            font-size: 26px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .control-icon-main:active {
+            transform: scale(0.9);
+        }
+
+        .play-btn-container {
+            width: 60px;
+            height: 60px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .play-btn-container:active {
+            transform: scale(0.95);
+        }
+
+        .play-btn-container i {
+            color: var(--bg-panel);
+            font-size: 24px;
+            margin-left: 4px;
+            /* Default play offset */
+        }
+
+        /* --- Right Panel: Search & Playlist --- */
+        .playlist-panel {
+            flex: 1;
+            padding: 18px;
+            padding-right: 12px;
+            /* scrollbar compensation */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-bar {
+            background-color: var(--bg-input);
+            border-radius: 16px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .search-icon {
+            color: var(--text-dim);
+            font-size: 16px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 15px;
+            font-weight: 400;
+            outline: none;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .search-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--text-dim);
+            font-size: 16px;
+        }
+
+        .search-actions i {
+            cursor: pointer;
+            transition: color 0.1s;
+        }
+
+        .search-actions i:hover {
+            color: var(--text-main);
+        }
+
+        .playlist-content {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding-right: 8px;
+            position: relative;
+        }
+
+        /* Scrollbar */
+        .playlist-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .playlist-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .playlist-content::-webkit-scrollbar-thumb {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+        }
+
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-dim);
+            gap: 16px;
+            width: 100%;
+        }
+
+        .empty-icon {
+            font-size: 36px;
+            color: var(--text-dim);
+            opacity: 0.8;
+            border: 2px solid var(--text-dim);
+            border-radius: 50%;
+            padding: 8px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .empty-state p {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        /* Search Results / List Items */
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            margin-bottom: 6px;
+        }
+
+        .playlist-item:hover,
+        .playlist-item.active {
+            background-color: var(--hover-bg);
+        }
+
+        .item-art {
+            width: 44px;
+            height: 44px;
+            background-color: var(--bg-secondary);
+            border-radius: 6px;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+        }
+
+        .item-info {
+            flex: 1;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .item-info h4 {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-info p {
+            font-size: 13px;
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 800px) {
+            .app-container {
+                flex-direction: column;
+                height: 100%;
+                overflow-y: auto;
+            }
+
+            .player-panel,
+            .playlist-panel {
+                width: 100%;
+                flex: none;
+                margin-bottom: 16px;
+            }
+
+            .playlist-panel {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Left Panel: Player -->
+        <div class="panel player-panel">
+            <div class="album-art-container">
+                <div id="yt-player"></div>
+                <div id="main-player-art"></div>
+                <!-- The placeholder is rendered over YT player until play -->
+                <div class="placeholder-overlay" id="player-placeholder">
+                    <i class="fa-solid fa-music placeholder-icon"></i>
+                </div>
+            </div>
+
+            <div class="song-info-row">
+                <div class="song-text">
+                    <h2 id="current-title"><span id="title-text">Not Playing</span></h2>
+                    <p id="current-artist">Try searching on the right</p>
+                </div>
+            </div>
+
+            <div class="progress-bar-container" id="progress-container">
+                <div class="progress-bar-bg" id="progress-bg">
+                    <div class="progress-bar-fill" id="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="controls-row">
+                <i class="fa-solid fa-repeat control-icon-small" id="loop-btn"></i>
+                <div class="main-controls">
+                    <i class="fa-solid fa-backward-step control-icon-main" id="prev-btn"></i>
+                    <div class="play-btn-container" id="play-pause-btn">
+                        <i class="fa-solid fa-play"></i>
+                    </div>
+                    <i class="fa-solid fa-forward-step control-icon-main" id="next-btn"></i>
+                </div>
+                <!-- Empty div block to maintain flex-box space-between layout for the loop button on the left -->
+                <div style="width: 22px;"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Search & Playlist -->
+        <div class="panel playlist-panel">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search any song">
+                <div class="search-actions">
+                    <i class="fa-regular fa-clone"></i>
+                </div>
+            </div>
+
+            <div class="playlist-content" id="playlist">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-magnifying-glass" style="font-size: 28px;"></i></div>
+                    <p>Try searching "rap"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        // Configuration
+        const YOUTUBE_API_KEY = "AIzaSyBOa_Y6nh1TCuesniQy-xSLu1SKkJafEgI"; // User's API Key
+        let playlist = [];
+        let currentIndex = -1;
+        let ytPlayer = null;
+        let isYtPlayerReady = false;
+
+        // Domestic Elements
+        const playlistEl = document.getElementById('playlist');
+        const searchInput = document.getElementById('search-input');
+        const currentTitleText = document.getElementById('title-text');
+        const currentArtistEl = document.getElementById('current-artist');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playPauseIcon = playPauseBtn.querySelector('i');
+        const progressFill = document.getElementById('progress-fill');
+        const progressContainer = document.getElementById('progress-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const loopBtn = document.getElementById('loop-btn');
+        const playerPlaceholder = document.getElementById('player-placeholder');
+        const mainPlayerArt = document.getElementById('main-player-art');
+
+        let progressInterval;
+        let isLooping = false;
+
+        // YouTube IFrame API Initialization
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('yt-player', {
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0, // Disable native UI for clean look
+                    'disablekb': 1,
+                    'fs': 0,
+                    'rel': 0,
+                    'modestbranding': 1,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        }
+
+        function onPlayerError(event) {
+            console.warn("YouTube Player encountered an error:", event.data);
+            currentTitleText.textContent = "Song blocked by uploader";
+            currentArtistEl.textContent = "Skipping to next track...";
+
+            // Wait 2 seconds so the user can see the error, then skip
+            setTimeout(() => {
+                playNext();
+            }, 2000);
+        }
+
+        function onPlayerReady(event) {
+            isYtPlayerReady = true;
+            if (playlist.length > 0 && currentIndex !== -1) {
+                event.target.loadVideoById(playlist[currentIndex].id);
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                playPauseIcon.className = 'fa-solid fa-pause';
+                playPauseBtn.style.paddingLeft = '0'; // Center pause icon properly
+                startProgressBar();
+            } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.UNSTARTED) {
+                playPauseIcon.className = 'fa-solid fa-play';
+                playPauseBtn.style.paddingLeft = '4px'; // Offset play icon
+                stopProgressBar();
+            } else if (event.data === YT.PlayerState.ENDED) {
+                stopProgressBar();
+                if (isLooping && ytPlayer) {
+                    ytPlayer.seekTo(0);
+                    ytPlayer.playVideo();
+                } else {
+                    playNext();
+                }
+            }
+        }
+
+        function startProgressBar() {
+            stopProgressBar();
+            progressInterval = setInterval(() => {
+                if (ytPlayer && ytPlayer.getCurrentTime && ytPlayer.getDuration) {
+                    const current = ytPlayer.getCurrentTime();
+                    const duration = ytPlayer.getDuration();
+                    if (duration > 0) {
+                        const percent = (current / duration) * 100;
+                        progressFill.style.width = `${percent}%`;
+                    }
+                }
+            }, 200); // 5fps updates for smooth transition
+        }
+
+        function stopProgressBar() {
+            if (progressInterval) clearInterval(progressInterval);
+        }
+
+        // Progress Bar Click
+        progressContainer.addEventListener('click', (e) => {
+            if (!isYtPlayerReady || !ytPlayer || !ytPlayer.getDuration) return;
+            const duration = ytPlayer.getDuration();
+            const rect = progressContainer.getBoundingClientRect();
+            const offset = e.clientX - rect.left;
+            const percent = offset / rect.width;
+
+            // update UI immediately
+            progressFill.style.width = `${percent * 100}%`;
+            ytPlayer.seekTo(percent * duration, true);
+        });
+
+        // Controls
+        playPauseBtn.onclick = () => {
+            if (!isYtPlayerReady || !ytPlayer || !ytPlayer.getPlayerState) return;
+            const state = ytPlayer.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                ytPlayer.pauseVideo();
+            } else {
+                ytPlayer.playVideo();
+            }
+        };
+
+        loopBtn.onclick = () => {
+            isLooping = !isLooping;
+            if (isLooping) {
+                loopBtn.style.color = 'var(--accent)';
+            } else {
+                loopBtn.style.color = 'var(--text-dim)';
+            }
+        };
+
+        function playNext() {
+            if (playlist.length === 0) return;
+            let nextIndex = currentIndex + 1;
+            if (nextIndex >= playlist.length) nextIndex = 0; // loop back
+            const song = playlist[nextIndex];
+            if (isYtPlayerReady && ytPlayer && ytPlayer.loadVideoById) {
+                ytPlayer.loadVideoById(song.id);
+                if (ytPlayer.playVideo) ytPlayer.playVideo();
+            }
+            playSong(nextIndex);
+        }
+
+        function playPrev() {
+            if (playlist.length === 0) return;
+            if (ytPlayer && ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() > 3) {
+                // Restart song if played for more than 3 sec
+                ytPlayer.seekTo(0);
+                return;
+            }
+            let prevIndex = currentIndex - 1;
+            if (prevIndex < 0) prevIndex = playlist.length - 1;
+            const song = playlist[prevIndex];
+            if (isYtPlayerReady && ytPlayer && ytPlayer.loadVideoById) {
+                ytPlayer.loadVideoById(song.id);
+                if (ytPlayer.playVideo) ytPlayer.playVideo();
+            }
+            playSong(prevIndex);
+        }
+
+        prevBtn.onclick = playPrev;
+        nextBtn.onclick = playNext;
+
+        // Search API Functions
+        async function searchSongs(query) {
+            if (!query) return;
+
+            // Loading state
+            playlistEl.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon" style="border: none;"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px;"></i></div>
+                    <p style="margin-top:-10px;">Searching...</p>
+                </div>
+            `;
+
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&key=${YOUTUBE_API_KEY}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || "YouTube API Error");
+                }
+
+                const data = await response.json();
+
+                if (!data.items || data.items.length === 0) {
+                    playlistEl.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                            <p>No results found for "${query}"</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Decode HTML entities
+                const decodeHTMLEntities = (text) => {
+                    const textArea = document.createElement('textarea');
+                    textArea.innerHTML = text;
+                    return textArea.value;
+                };
+
+                playlist = data.items.map(item => ({
+                    id: item.id.videoId,
+                    title: decodeHTMLEntities(item.snippet.title),
+                    artist: item.snippet.channelTitle,
+                    thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url
+                }));
+
+                // Reset selection
+                currentIndex = -1;
+                renderPlaylist();
+            } catch (error) {
+                console.error(`Search failed:`, error);
+                playlistEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon" style="color:#ef4444; border-color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <p style="color: #ef4444;">Search failed: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPlaylist() {
+            playlistEl.innerHTML = "";
+            playlist.forEach((song, index) => {
+                const item = document.createElement('div');
+                item.className = `playlist-item ${index === currentIndex ? 'active' : ''}`;
+                item.innerHTML = `
+                    <div class="item-art" style="background-image: url('${song.thumbnail}');"></div>
+                    <div class="item-info">
+                        <h4>${song.title}</h4>
+                        <p>${song.artist}</p>
+                    </div>
+                `;
+                item.onclick = (e) => {
+                    // Start playback immediately on the raw DOM click so browser sees it as a trusted gesture!
+                    if (isYtPlayerReady && ytPlayer && ytPlayer.loadVideoById) {
+                        ytPlayer.loadVideoById(song.id);
+                        if (ytPlayer.playVideo) ytPlayer.playVideo();
+                    }
+                    playSong(index);
+                };
+                playlistEl.appendChild(item);
+            });
+        }
+
+        async function playSong(index) {
+            if (index < 0 || index >= playlist.length) return;
+
+            currentIndex = index;
+            const song = playlist[currentIndex];
+
+            // Update UI list highlight
+            renderPlaylist();
+
+            // Update Player UI
+            currentTitleText.textContent = song.title;
+            currentArtistEl.textContent = song.artist;
+
+            // Set main art and crossfade
+            mainPlayerArt.style.backgroundImage = `url('${song.thumbnail}')`;
+            mainPlayerArt.style.opacity = '1';
+
+            playerPlaceholder.style.opacity = '0'; // Reveal YT Player
+            setTimeout(() => playerPlaceholder.style.display = 'none', 300);
+
+            // Reset progress bar
+            progressFill.style.width = '0%';
+
+            // Playback was triggered inside the item.onclick directly to preserve browser user gestures.
+        }
+
+        // Event Listeners for Search
+        searchInput.onkeydown = (e) => {
+            if (e.key === 'Enter') searchSongs(e.target.value);
+        };
+    </script>
+</body>
+
+</html>
